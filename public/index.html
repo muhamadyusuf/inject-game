@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Misi Pasar Pixel</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap" id="wrap">
+
+  <section id="view-login" style="margin-top:40px">
+    <div class="card title-card">
+      <h1 style="font-size:40px">🛡️ MISI PASAR PIXEL</h1>
+      <p class="sub">Belajar Injection dan Burp Suite sambil bermain. Kalahkan Penjaga Gerbang Bot dengan bukti, bukan tebakan! Dimainkan dengan Burp Suite asli di server game ini.</p>
+    </div>
+    <div class="card">
+      <h2>Pilih cara bermain</h2>
+      <label for="guest-name">Main sebagai Tamu (tanpa akun, langsung jalan)</label>
+      <input id="guest-name" type="text" maxlength="24" placeholder="Nama pemain, contoh: Budi X-RPL">
+      <div class="row" style="margin-top:10px">
+        <button id="btn-guest" class="btn">▶ MAIN SEKARANG</button>
+        <button id="btn-login" class="btn blue">Masuk dengan Google</button>
+        <button class="btn secondary" data-bantuan="1">❓ Cara bermain</button>
+      </div>
+      <p id="login-error" class="feedback bad hidden"></p>
+      <p class="ethics">Game ini dimainkan dengan Burp Suite asli, tetapi targetnya hanya Pasar Pixel di server game ini (jawabannya diskripkan, tanpa database dan tanpa kode rentan sungguhan). Di dunia nyata, uji sistem hanya dengan izin tertulis dari pemiliknya. Mode Tamu tidak butuh internet. Login Google bersifat pilihan.</p>
+    </div>
+  </section>
+
+  <section id="view-game" class="hidden game-grid">
+    <aside id="menu">
+      <div class="menu-user"><span class="avatar" id="user-avatar"></span><span id="user-name"></span></div>
+      <div class="menu-title">🗺️ MISI</div>
+      <div id="level-list" class="menu-list"></div>
+      <div class="menu-title">📊 STATUS</div>
+      <div class="stat" id="stat-xp">⭐ XP: 0</div>
+      <div class="stat" id="stat-misi">🎯 0 / 5</div>
+      <div class="stat" id="stat-pangkat">🏅 Pemula</div>
+      <div class="menu-title">⚙️ AKSI</div>
+      <button class="btn sm secondary" data-bantuan="1">❓ Cara bermain</button>
+      <button class="btn sm warn" data-act="serang-biasa">⚔️ Serang Biasa</button>
+      <button class="btn sm secondary" data-act="reset-arena">🔄 Reset</button>
+      <button id="btn-logout" class="btn sm secondary">🚪 Keluar</button>
+    </aside>
+
+    <main id="main">
+      <div class="card stage" id="stage">
+        <div class="fighter" id="f-pemain">
+          <div class="f-name" id="p-name">Pemain</div>
+          <div class="hp-label"><span>❤️ HP</span><span id="p-hp-text">100 / 100</span></div>
+          <div class="hp-bar player"><div id="p-hp-fill" class="hp-fill" style="width:100%"></div></div>
+          <div class="sprite-box"><div class="char" id="char"><i class="head"></i><i class="body"></i><i class="arm l"></i><i class="arm r"></i><i class="leg l"></i><i class="leg r"></i></div><div class="pop" id="pop-p"></div></div>
+          <div class="senjata" id="senjata"></div>
+          <div class="power" id="p-power"></div>
+        </div>
+        <div class="vs">VS</div>
+        <div class="fighter" id="f-monster">
+          <div class="f-name">👾 Penjaga Gerbang Bot</div>
+          <div class="hp-label"><span>💀 HP</span><span id="hp-text">100 / 100 HP</span></div>
+          <div class="hp-bar"><div id="hp-fill" class="hp-fill" style="width:100%"></div></div>
+          <div class="sprite-box"><div class="monster" id="monster"><i class="horn l"></i><i class="horn r"></i><i class="mhead"><b class="eye l"></b><b class="eye r"></b><b class="mouth"></b></i></div><div class="pop" id="pop-m"></div></div>
+          <div class="power" id="m-info">Pertahanan: hanya bukti yang menembus</div>
+        </div>
+      </div>
+      <div id="hero-msg"></div>
+      <div id="victory" class="feedback ok hidden">🏆 Penjaga Gerbang tumbang! Semua misi selesai. Tunjukkan layar ini ke instruktur untuk verifikasi akhir.</div>
+      <div id="input-area"></div>
+    </main>
+    <aside id="misi-panel"><div id="misi-area"></div></aside>
+  </section>
+
+  <footer>Uji hanya target game ini · Sistem nyata hanya dengan izin tertulis</footer>
+</div>
+<div id="modal-intro" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="intro-judul">
+  <div class="modal-box">
+    <h2 id="intro-judul">👋 Cara bermain</h2>
+    <p class="sub">Kalahkan Penjaga Gerbang Bot dengan bukti nyata dari Burp Suite. Ada 3 langkah:</p>
+    <ol class="cara">
+      <li><b>Siapkan Burp.</b> Buka Burp Suite, tab Proxy, klik Open browser. Di browser itu buka <span class="mono" id="intro-alamat"></span> lalu masuk dengan nama yang sama.</li>
+      <li><b>Ikuti tanda 👉.</b> Lakukan aksi di Burp (HTTP history atau Repeater), lalu jawab pertanyaan dengan tombol.</li>
+      <li><b>Kalahkan monster.</b> Tiap misi selesai = -20 HP monster. Request Burp yang salah atau jawaban salah = -10 HP kamu.</li>
+    </ol>
+    <p class="ethics">Uji hanya target game ini. Sistem nyata hanya dengan izin tertulis dari pemiliknya.</p>
+    <button id="btn-intro-ok" class="btn">Mengerti, mulai!</button>
+  </div>
+</div>
+<script type="module" src="app.js"></script>
+</body>
+</html>

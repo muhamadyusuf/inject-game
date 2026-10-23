@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Dasbor Admin - Misi Pasar Pixel</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  .tiles-admin{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
+  .tile-a{background:var(--panel);border:3px solid var(--line);border-radius:10px;padding:10px 14px;box-shadow:0 5px 0 rgba(0,0,0,.45)}
+  .tile-a .n{font-size:30px;font-weight:900;color:var(--yellow);text-shadow:0 3px 0 #000}
+  .tile-a .l{font-size:12px;color:var(--muted)}
+  .tabel{width:100%;border-collapse:separate;border-spacing:0 6px;font-size:13px}
+  .tabel th{text-align:left;color:var(--yellow);font-size:11px;letter-spacing:1px;padding:4px 8px;text-transform:uppercase}
+  .tabel td{background:var(--panel2);padding:8px;border-top:3px solid #000;border-bottom:3px solid #000;vertical-align:middle}
+  .tabel td:first-child{border-left:3px solid #000;border-radius:8px 0 0 8px}
+  .tabel td:last-child{border-right:3px solid #000;border-radius:0 8px 8px 0}
+  .tabel tr.off td{opacity:.6}
+  .kotak{display:inline-flex;gap:3px}
+  .kotak b{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border:3px solid #000;border-radius:5px;background:#555;font-size:13px}
+  .kotak b.ok{background:var(--green)} .kotak b.cek{background:var(--blue)} .kotak b.aktif{outline:3px solid var(--yellow)}
+  .kotak b.curiga{background:var(--orange)}
+  .minibar{width:90px;height:12px;background:#222;border:2px solid #000;border-radius:4px;overflow:hidden;display:inline-block;vertical-align:middle}
+  .minibar i{display:block;height:100%}
+  .minibar.p i{background:var(--green)} .minibar.m i{background:var(--red)}
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+  .toolbar input[type=text]{width:220px;margin:0}
+  .legenda{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.6}
+  .scroll-x{overflow-x:auto}
+</style>
+</head>
+<body>
+<div class="wrap lebar">
+  <section id="v-login" class="hidden" style="max-width:420px;margin:60px auto">
+    <div class="card title-card"><h1>🛡️ Dasbor Admin</h1><p class="sub">Masukkan kunci admin yang tercetak di terminal saat server dijalankan.</p></div>
+    <div class="card">
+      <label for="kunci">Kunci admin</label>
+      <input id="kunci" type="text" autocomplete="off" placeholder="kunci admin">
+      <div class="row" style="margin-top:10px"><button id="btn-masuk" class="btn">Masuk</button></div>
+      <p id="err" class="feedback bad hidden"></p>
+    </div>
+  </section>
+
+  <section id="v-dash" class="hidden">
+    <div id="userbar"><div><b>🛡️ Dasbor Admin</b> <span class="kecil" id="info-server"></span></div>
+      <div class="row"><button id="btn-csv" class="btn sm blue">⬇ Ekspor CSV</button><button id="btn-hapus" class="btn sm warn">🗑 Hapus semua data</button><button id="btn-keluar" class="btn sm secondary">Keluar</button></div></div>
+    <div class="tiles-admin" id="ringkas"></div>
+    <div class="card">
+      <div class="toolbar">
+        <input id="cari" type="text" placeholder="Cari nama pemain...">
+        <label style="margin:0;display:flex;gap:6px;align-items:center"><input id="onlinesaja" type="checkbox"> Hanya yang online</label>
+        <span class="kecil" id="pembaruan"></span>
+      </div>
+      <div class="scroll-x"><table class="tabel"><thead><tr>
+        <th>Status</th><th>Pemain</th><th>Misi</th><th>Progres</th><th>HP kamu / monster</th><th>Request</th><th>Salah</th><th>Terakhir aktif</th>
+      </tr></thead><tbody id="baris"></tbody></table></div>
+      <div id="kosong" class="misi-kosong hidden">Belum ada pemain. Minta peserta membuka game dan masuk.</div>
+      <div class="legenda">
+        <b>Progres per misi:</b> <span class="kotak"><b class="ok">✓</b></span> selesai (dilaporkan pemain) ·
+        <span class="kotak"><b class="cek">🔎</b></span> aksi di Burp sudah terbukti di log server, belum selesai ·
+        <span class="kotak"><b class="curiga">⚠</b></span> dilaporkan selesai tetapi tidak ada bukti di log server (log di-reset atau server restart) ·
+        <span class="kotak"><b class="aktif">·</b></span> misi yang sedang dikerjakan.<br>
+        <b>Request:</b> 🎮 dari tombol SERANG, 🔎 dari Burp (diulang atau diubah). <b>Salah:</b> jawaban salah / request Burp salah.
+        Progres dan HP adalah laporan pemain sendiri; jumlah request dan bukti aksi dicatat server.
+      </div>
+    </div>
+  </section>
+</div>
+<script type="module" src="admin.js"></script>
+</body>
+</html>

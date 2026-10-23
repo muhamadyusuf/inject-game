@@ -1,0 +1,17 @@
+{
+  "name": "misi-pasar-pixel",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Game pendamping workshop Injection, Burp Suite & AI. Simulasi mandiri di satu port; mode Tamu, login Google opsional.",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "start": "node --env-file-if-exists=.env start.js",
+    "game": "node --env-file-if-exists=.env server.js",
+    "test": "node --test \"test/*.test.js\""
+  },
+  "dependencies": {
+    "express": "5.3.0"
+  }
+}

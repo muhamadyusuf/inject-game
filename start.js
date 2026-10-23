@@ -7,7 +7,7 @@ const ips = Object.values(os.networkInterfaces()).flat()
   .filter((i) => i.family === 'IPv4' && !i.internal).map((i) => i.address);
 console.log('\n=== MISI PASAR PIXEL ===');
 console.log('Pemain di PC ini : http://localhost:3003');
-for (const ip of ips) console.log(`Pemain di PC lain: http://${ip}:3003   (login Google: tambahkan IP ini di Firebase Authorized domains; mode Tamu tidak perlu)`);
+for (const ip of ips) console.log(`Pemain di PC lain: http://${ip}:3003`);
 console.log('');
 const stop = () => game.kill();
 process.on('SIGINT', stop);

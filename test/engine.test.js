@@ -166,7 +166,7 @@ test('server: halaman dan modul dari satu port; hanya satu kolom isian (nama pem
   await new Promise((r) => srv.once('listening', r));
   try {
     const base = `http://127.0.0.1:${srv.address().port}`;
-    for (const f of ['/', '/app.js', '/engine.js', '/sim.js', '/missions.js', '/style.css', '/firebase-config.js']) {
+    for (const f of ['/', '/app.js', '/engine.js', '/sim.js', '/missions.js', '/style.css']) {
       assert.equal((await fetch(base + f)).status, 200, f);
     }
     const html = await (await fetch(base + '/')).text();

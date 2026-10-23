@@ -2,7 +2,7 @@
   "name": "misi-pasar-pixel",
   "version": "2.0.0",
   "private": true,
-  "description": "Game pendamping workshop Injection, Burp Suite & AI. Simulasi mandiri di satu port; mode Tamu, login Google opsional.",
+  "description": "Game pendamping workshop Injection, Burp Suite & AI. Simulasi mandiri di satu port; mode Tamu.",
   "engines": {
     "node": ">=20"
   },

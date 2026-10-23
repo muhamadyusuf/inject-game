@@ -15,8 +15,6 @@ npm start
 Buka `http://localhost:3003`. Dari PC lain di jaringan yang sama, pakai IP LAN yang dicetak saat start. Satu server cukup untuk seluruh kelas, karena progres tersimpan di browser masing-masing.
 
 - **Mode Tamu** (default): isi nama, langsung main. Tanpa akun dan tanpa internet.
-- **Login Google** (opsional): isi `public/firebase-config.js` dengan config web Firebase Anda (publik, bukan rahasia) dan aktifkan provider Google di Firebase Console. Firebase hanya dimuat saat tombolnya ditekan, jadi kegagalan Firebase tidak mengganggu mode Tamu.
-- `auth/unauthorized-domain`: buka lewat `http://localhost:3003` (bukan `127.0.0.1`), atau tambahkan domain/IP (tanpa port) di Authentication, Settings, Authorized domains.
 
 ## Tampilan dan mekanisme
 
@@ -35,7 +33,7 @@ Panel input memuat respons terakhir dari server, **log bukti** yang dilihat serv
 ## Alur permainan
 
 0. **Kotak "👋 Cara bermain"** muncul otomatis di atas halaman login saat pertama kali game dibuka di sebuah browser (3 langkah: siapkan Burp, ikuti tanda 👉, kalahkan monster, termasuk alamat game yang sedang dipakai). Tutup dengan tombol, Esc, atau klik latar; setelah itu tidak muncul lagi di browser itu. Tombol **❓ Cara bermain** di halaman login dan di menu kiri membukanya lagi kapan saja.
-1. **Masuk** (Tamu atau Google). Misi pertama yang belum selesai langsung terbuka.
+1. **Masuk** (mode Tamu). Misi pertama yang belum selesai langsung terbuka.
 2. Tiap misi punya **tujuan** satu kalimat dan daftar langkah. Langkah yang sedang giliran ditandai **👉** dan menampilkan petunjuk konkret (mis. "klik kanan request, Send to Repeater, ubah kategori=Pedang menjadi kategori=Perisai, klik Send"). Pilihan jawaban hanya muncul untuk langkah sekarang, jadi layar tidak penuh.
 3. Setelah semua langkah selesai: animasi serangan, monster -20 HP, lalu **otomatis lanjut** ke misi berikutnya. Setelah misi terakhir, monster tumbang.
 
@@ -88,7 +86,6 @@ Di Vercel tiap permintaan bisa dilayani instans berbeda dan memori tidak dibagi,
 2. **Tambah Redis:** dashboard Vercel, tab **Storage**, buat database **Upstash for Redis** (Marketplace), lalu hubungkan ke proyek. Vercel mengisi variabel `KV_REST_API_URL` dan `KV_REST_API_TOKEN` (atau `UPSTASH_REDIS_REST_URL` dan `UPSTASH_REDIS_REST_TOKEN`) secara otomatis. Keduanya dikenali.
 3. **Isi `ADMIN_KEY`** di Settings, Environment Variables. **Wajib**: tanpa ini dasbor admin dimatikan (jawaban 503), karena kunci acak/file berbeda di tiap instans.
 4. **Redeploy**, lalu buka `/admin.html`, masuk, dan pastikan tertulis **penyimpanan: redis**. Jika serverless tetapi masih memori, dasbor menampilkan banner peringatan merah.
-5. **Login Google (opsional):** tambahkan domain `*.vercel.app` Anda (tanpa `https://`) di Firebase, Authentication, Settings, Authorized domains. Mode Tamu tidak butuh langkah ini.
 
 `TRUST_PROXY` tidak perlu diatur di Vercel (otomatis aktif).
 
@@ -145,7 +142,7 @@ Identitas pemain adalah cookie `pemain` yang dipasang halaman. Burp browser memb
 | `public/sim.js` | Data toko dan jawaban skrip (rentan dan aman) |
 | `public/missions.js` | 5 misi, langkah aksi dan pertanyaan |
 | `public/engine.js` | State dan aksi tombol, penilaian misi (tanpa DOM, mudah diuji) |
-| `public/app.js` | UI, login Tamu/Google, penyimpanan progres per pemain |
+| `public/app.js` | UI, mode Tamu, penyimpanan progres per pemain |
 | `public/style.css`, `index.html` | Tampilan |
 | `server.js` | Satu port: halaman, endpoint `/pasar/:versi/item`, log bukti, laporan progres, API admin. Diekspor sebagai handler (kompatibel Vercel). |
 | `store.js` | Penyimpanan data pemain: memori (bawaan) atau Redis REST (Upstash/Vercel KV) |

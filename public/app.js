@@ -260,7 +260,7 @@ document.addEventListener('click', async (e) => {
   lapor();
 });
 
-// ---------- masuk: Tamu (default) atau Google (opsional) ----------
+// ---------- masuk: mode Tamu ----------
 const GUEST_KEY = 'pasar-pixel:tamu-terakhir';
 const slug = (t) => t.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 32) || 'pemain';
 
@@ -308,39 +308,7 @@ $('btn-guest').onclick = () => {
 };
 $('guest-name').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('btn-guest').click(); });
 
-let firebaseApi = null;
-async function muatFirebase() {
-  if (firebaseApi) return firebaseApi;
-  const { firebaseConfig } = await import('./firebase-config.js');
-  if (!firebaseConfig || !firebaseConfig.apiKey || /GANTI/.test(firebaseConfig.apiKey)) throw new Error('config-kosong');
-  const [appMod, authMod] = await Promise.all([
-    import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js'),
-    import('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js'),
-  ]);
-  firebaseApi = { auth: authMod.getAuth(appMod.initializeApp(firebaseConfig)), authMod };
-  return firebaseApi;
-}
-
-$('btn-login').onclick = async () => {
-  $('login-error').classList.add('hidden');
-  try {
-    const { auth, authMod } = await muatFirebase();
-    const res = await authMod.signInWithPopup(auth, new authMod.GoogleAuthProvider());
-    const g = res.user;
-    masuk({ uid: 'google:' + g.uid, displayName: g.displayName || g.email || 'Siswa', photoURL: g.photoURL || '' });
-  } catch (e) {
-    const kode = e.code || e.message;
-    tampilkanError({
-      'auth/unauthorized-domain': 'Buka game lewat http://localhost:3003 (bukan 127.0.0.1), atau minta instruktur menambah domain ini di Firebase Authorized domains. Kamu tetap bisa main sebagai Tamu.',
-      'config-kosong': 'Login Google belum disiapkan. Main sebagai Tamu saja.',
-      'auth/popup-closed-by-user': 'Jendela login ditutup. Coba lagi atau main sebagai Tamu.',
-    }[kode] || `Login Google tidak tersedia sekarang (${kode}). Main sebagai Tamu saja.`);
-  }
-};
-$('btn-logout').onclick = async () => {
-  if (firebaseApi) { try { await firebaseApi.authMod.signOut(firebaseApi.auth); } catch {} }
-  keluar();
-};
+$('btn-logout').onclick = () => keluar();
 
 try {
   const last = JSON.parse(localStorage.getItem(GUEST_KEY));

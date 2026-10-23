@@ -225,11 +225,16 @@ async function segarkanLog() {
 
 // Laporkan progres ke server agar admin bisa memantau. Ini laporan pemain sendiri;
 // bukti request (game vs Burp) dicatat server sendiri dan tampil terpisah di dasbor admin.
+let laporanTerakhir = { json: '', t: 0 };
 function lapor() {
   if (!user || !s) return;
   const body = { nama: user.displayName, selesai: progres.selesai, misiAktif, hpPemain: s.hpPemain,
     hpMusuh: hpMusuh(progres.selesai), salahJawab: progres.salahJawab, salahKirim: progres.salahKirim };
-  fetch('/api/progres', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), credentials: 'same-origin', keepalive: true }).catch(() => {});
+  const json = JSON.stringify(body);
+  // Hemat kuota server: kirim hanya jika ada perubahan, atau sebagai detak "masih online" tiap 10 detik.
+  if (json === laporanTerakhir.json && Date.now() - laporanTerakhir.t < 10000) return;
+  laporanTerakhir = { json, t: Date.now() };
+  fetch('/api/progres', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: json, credentials: 'same-origin', keepalive: true }).catch(() => {});
 }
 
 let timerLog = null;
@@ -241,7 +246,7 @@ function mulaiPolling() {
       if (await segarkanLog()) { nilaiKirim(); cekSelesai(); render(); }
       lapor();
     } catch { /* server sementara tidak terjangkau; coba lagi di putaran berikutnya */ }
-  }, 2000);
+  }, 3000);
 }
 
 document.addEventListener('click', async (e) => {
@@ -283,6 +288,7 @@ function masuk(u) {
 }
 function keluar() {
   user = null; s = null;
+  laporanTerakhir = { json: '', t: 0 };
   clearInterval(timerLog);
   document.cookie = 'pemain=; path=/; max-age=0';
   try { localStorage.removeItem(GUEST_KEY); } catch {}

@@ -10,13 +10,11 @@ const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
 const { pathToFileURL } = require('node:url');
+const { buatStore } = require('./store.js');
 
 const PUBLIC = path.join(__dirname, 'public');
-const MAKS_PEMAIN = 500;
-const MAKS_LOG = 100;
-const MAKS_NONCE = 200;
 const MAKS_KATEGORI = 100;
-const ONLINE_MS = 15000;
+const ONLINE_MS = 25000; // klien melapor tiap <= 10 detik
 const KUNCI_CONTOH = 'ganti-dengan-kunci-acak-yang-panjang'; // sama dengan .env.example
 
 const impor = (f) => import(pathToFileURL(path.join(PUBLIC, f)).href);
@@ -68,22 +66,16 @@ function tentukanKunci(opsi = {}) {
 function createGameApp(opsi = {}) {
   const { kunci: adminKey, sumber } = tentukanKunci(opsi);
   const adminToken = sha('admin:' + adminKey);
+  // Di Vercel (serverless) kunci acak/file berbeda tiap instans, jadi admin dimatikan sampai ADMIN_KEY diatur.
+  const adminAktif = !(process.env.VERCEL && sumber === 'acak');
+  const store = opsi.store || buatStore(process.env);
   const app = express();
   app.disable('x-powered-by');
-  const proxy = opsi.trustProxy ?? Number(process.env.TRUST_PROXY || 0);
+  const proxy = opsi.trustProxy ?? Number(process.env.TRUST_PROXY || (process.env.VERCEL ? 1 : 0));
   if (proxy) app.set('trust proxy', proxy);
   app.adminKey = adminKey;
   app.sumberKunci = sumber;
-
-  // pemain -> { log, nonce, no }. Hanya di memori; hilang saat server restart.
-  const data = new Map();
-  // pemain -> laporan progres yang DILAPORKAN pemain sendiri (bukan bukti terverifikasi).
-  const profil = new Map();
-  const batasi = (m) => { if (m.size >= MAKS_PEMAIN) m.delete(m.keys().next().value); };
-  const ambil = (pemain) => {
-    if (!data.has(pemain)) { batasi(data); data.set(pemain, { log: [], nonce: new Set(), no: 0 }); }
-    return data.get(pemain);
-  };
+  app.store = store;
 
   // ---------- Pasar Pixel (target Burp) ----------
   app.get('/pasar/:versi/item', async (req, res) => {
@@ -100,18 +92,10 @@ function createGameApp(opsi = {}) {
     const hasil = tanggapi(buatRequest({ kategori, cookieSkin: skin, pemain }), versi);
 
     // via: 'game' = request pertama dari tombol SERANG; 'burp' = nonce dipakai ulang atau tidak ada
-    // (artinya diulang atau diubah di luar game, mis. di Repeater).
-    const p = ambil(pemain);
+    // (artinya diulang atau diubah di luar game, mis. di Repeater). Dicatat oleh store.
     const nonce = String(req.get('X-Aksi') || '').slice(0, 64);
-    let via = 'burp';
-    if (nonce && !p.nonce.has(nonce)) {
-      via = 'game';
-      if (p.nonce.size >= MAKS_NONCE) p.nonce.delete(p.nonce.values().next().value);
-      p.nonce.add(nonce);
-    }
     const kode = crypto.randomBytes(2).toString('hex').toUpperCase();
-    p.log.push({ no: ++p.no, versi, kategori, skin, status: hasil.status, jumlah: hasil.jumlah, via, kode, t: Date.now() });
-    if (p.log.length > MAKS_LOG) p.log.shift();
+    await store.catat(pemain, { versi, kategori, skin, status: hasil.status, jumlah: hasil.jumlah, kode }, nonce);
 
     if (!cookies.skin) res.append('Set-Cookie', 'skin=cerah; Path=/; SameSite=Lax');
     res.set({ 'X-Skin-Aktif': skin, 'X-Kode-Bukti': kode, 'Cache-Control': 'no-store' });
@@ -120,24 +104,23 @@ function createGameApp(opsi = {}) {
 
   const pemainDariCookie = (req) => bersihkanPemain(parseCookies(req.headers.cookie).pemain);
 
-  app.get('/api/log', (req, res) => {
+  app.get('/api/log', async (req, res) => {
     const pemain = pemainDariCookie(req);
-    res.set('Cache-Control', 'no-store').json({ log: pemain && data.has(pemain) ? data.get(pemain).log : [] });
+    res.set('Cache-Control', 'no-store').json({ log: pemain ? await store.log(pemain) : [] });
   });
-  app.post('/api/reset', (req, res) => {
+  app.post('/api/reset', async (req, res) => {
     const pemain = pemainDariCookie(req);
-    if (pemain) data.delete(pemain);
+    if (pemain) await store.reset(pemain);
     res.json({ ok: true });
   });
 
   // ---------- Laporan progres dari pemain ----------
-  app.post('/api/progres', express.json({ limit: '2kb' }), (req, res) => {
+  app.post('/api/progres', express.json({ limit: '2kb' }), async (req, res) => {
     const pemain = pemainDariCookie(req);
     if (!pemain) return res.status(400).json({ error: 'cookie pemain tidak ada' });
     const b = req.body && typeof req.body === 'object' ? req.body : {};
-    const sebelum = profil.get(pemain);
-    if (!sebelum) batasi(profil);
-    profil.set(pemain, {
+    const sebelum = await store.profil(pemain);
+    await store.simpanProfil(pemain, {
       nama: bersihkanNama(b.nama) || pemain,
       selesai: [...new Set((Array.isArray(b.selesai) ? b.selesai : []).map(Number).filter((n) => Number.isInteger(n) && n >= 1 && n <= 5))].sort(),
       misiAktif: b.misiAktif === null ? null : angka(b.misiAktif, 1, 5, null),
@@ -152,6 +135,7 @@ function createGameApp(opsi = {}) {
   });
 
   // ---------- Admin ----------
+  app.use('/api/admin', (req, res, next) => (adminAktif ? next() : res.status(503).json({ error: 'ADMIN_KEY belum diatur di server (wajib di Vercel)' })));
   const gagal = new Map(); // ip -> { n, reset }
   const cekAdmin = (req) => {
     const t = parseCookies(req.headers.cookie).admin || '';
@@ -181,10 +165,8 @@ function createGameApp(opsi = {}) {
   app.get('/api/admin/pemain', wajibAdmin, async (req, res) => {
     const { LEVELS } = await muatMisi();
     const sekarang = Date.now();
-    const ids = new Set([...profil.keys(), ...data.keys()]);
-    const baris = [...ids].map((id) => {
-      const d = data.get(id), pf = profil.get(id);
-      const log = d ? d.log : [];
+    const semua = await store.semua();
+    const baris = semua.map(({ id, profil: pf, log }) => {
       // Bukti terverifikasi server: apakah SEMUA langkah aksi sebuah misi sudah terbukti di log.
       const aksiTerbukti = LEVELS.map((m) => m.steps.filter((st) => st.tipe === 'aksi').every((st) => {
         try { return !!st.selesai({ log }); } catch { return false; }
@@ -200,9 +182,9 @@ function createGameApp(opsi = {}) {
         aksiTerbukti, mulai: pf ? pf.mulai : null, terakhir, online: sekarang - terakhir < ONLINE_MS,
       };
     }).sort((a, b) => b.terakhir - a.terakhir);
-    res.set('Cache-Control', 'no-store').json({ sekarang, jumlahMisi: LEVELS.length, pemain: baris });
+    res.set('Cache-Control', 'no-store').json({ sekarang, jumlahMisi: LEVELS.length, pemain: baris, penyimpanan: store.mode, serverless: !!process.env.VERCEL });
   });
-  app.post('/api/admin/hapus', wajibAdmin, (req, res) => { data.clear(); profil.clear(); res.json({ ok: true }); });
+  app.post('/api/admin/hapus', wajibAdmin, async (req, res) => { await store.hapusSemua(); res.json({ ok: true }); });
 
   app.use(express.static(PUBLIC));
   // Body rusak atau terlalu besar: jawab 400/413 tanpa membocorkan jejak error.
@@ -210,10 +192,21 @@ function createGameApp(opsi = {}) {
     if (err && (err.type === 'entity.parse.failed' || err.type === 'entity.too.large')) return res.status(err.status || 400).json({ error: 'permintaan tidak valid' });
     next(err);
   });
+  // Kegagalan lain (mis. penyimpanan tidak terjangkau): jawaban generik, rincian hanya di log server.
+  app.use((err, req, res, next) => {
+    console.error('kesalahan:', err && err.message);
+    if (res.headersSent) return next(err);
+    res.status(500).json({ error: 'kesalahan server' });
+  });
   return app;
 }
 
-module.exports = { createGameApp };
+// Ekspor utama adalah handler (req, res) supaya dikenali Vercel dan platform serverless lain;
+// createGameApp tetap tersedia sebagai properti (dipakai tes, start lokal, dan api/index.js).
+let appBawaan;
+function handler(req, res) { return (appBawaan ||= createGameApp())(req, res); }
+handler.createGameApp = createGameApp;
+module.exports = handler;
 
 if (require.main === module) {
   const port = Number(process.env.PORT || 3003);

@@ -46,7 +46,7 @@ function gambar(d) {
   const rata = semua.length ? (semua.reduce((a, p) => a + p.selesai.length, 0) / semua.length).toFixed(1) : '0';
   const burp = semua.reduce((a, p) => a + p.reqBurp, 0);
   $('ringkas').innerHTML = [
-    [semua.length, 'Pemain'], [online, 'Online (15 dtk)'], [tamat, `Selesai semua ${n} misi`], [rata, 'Rata-rata misi selesai'], [burp, 'Request dari Burp'],
+    [semua.length, 'Pemain'], [online, 'Online (25 dtk)'], [tamat, `Selesai semua ${n} misi`], [rata, 'Rata-rata misi selesai'], [burp, 'Request dari Burp'],
   ].map(([a, b]) => `<div class="tile-a"><div class="n">${esc(a)}</div><div class="l">${esc(b)}</div></div>`).join('');
 
   const baris = saring(d);
@@ -61,7 +61,11 @@ function gambar(d) {
     <td>${esc(lalu(d.sekarang - p.terakhir))}</td></tr>`).join('');
   $('kosong').classList.toggle('hidden', baris.length > 0);
   $('pembaruan').textContent = 'Diperbarui ' + new Date().toLocaleTimeString('id-ID');
-  $('info-server').textContent = `${semua.length} pemain tercatat`;
+  $('info-server').textContent = `${semua.length} pemain tercatat · penyimpanan: ${d.penyimpanan}`;
+  // Di serverless tanpa Redis, data bisa hilang atau terpecah antar instans: beri peringatan jelas.
+  const b = $('banner');
+  b.classList.toggle('hidden', !(d.serverless && d.penyimpanan === 'memori'));
+  b.textContent = '⚠️ Server berjalan serverless tetapi penyimpanan masih memori. Log bukti dan progres bisa hilang atau terpecah antar instans. Sambungkan Redis (Upstash/Vercel KV); lihat README bagian Vercel.';
 }
 
 async function muat() {
@@ -71,7 +75,7 @@ async function muat() {
     gambar(await r.json());
   } catch { $('pembaruan').textContent = 'Server tidak terjangkau, mencoba lagi...'; }
 }
-function mulai() { tampil('dash'); muat(); clearInterval(timer); timer = setInterval(() => { if (!document.hidden) muat(); }, 2000); }
+function mulai() { tampil('dash'); muat(); clearInterval(timer); timer = setInterval(() => { if (!document.hidden) muat(); }, 5000); }
 function berhenti() { clearInterval(timer); timer = null; }
 
 $('btn-masuk').onclick = async () => {

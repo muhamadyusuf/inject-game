@@ -4,7 +4,7 @@
   "private": true,
   "description": "Game pendamping workshop Injection, Burp Suite & AI. Simulasi mandiri di satu port; mode Tamu, login Google opsional.",
   "engines": {
-    "node": ">=24"
+    "node": ">=20"
   },
   "scripts": {
     "start": "node --env-file-if-exists=.env start.js",
